@@ -1,6 +1,6 @@
-# Here's what I've figured out so far, this comes from gliffy-testvm01 and gliffy-testvm02
+# Here's what I've figured out so far, this comes from company-testvm01 and company-testvm02
  
-# Installing the play framework for Gliffy
+# Installing the play framework for Company
 echo "export PATH=$PATH:/opt/play/current" >> /etc/profile
 mkdir -p /opt/play ; cd /opt/play
 wget http://downloads.typesafe.com/play/2.2.1/play-2.2.1.zip
