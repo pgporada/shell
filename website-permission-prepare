@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# PGP 
+
+BOLD=$(tput bold)
+YELLOW=$(tput setaf 3)
+GREEN=$(tput setaf 2)
+RED=$(tput setaf 1)
+RESET=$(tput sgr0)
+
+LOCATION=$1
+if [[ -z "${LOCATION}" ]]; then
+    echo "${BOLD}${YELLOW}[!]${RESET} To use this script, point it at a website folder such as follows"
+    echo "${BOLD}${YELLOW}[!]${RESET} ./$(basename $0) /var/www/domains/example.com/dev"
+    exit 69
+fi
+
+echo "${GREEN}${BOLD}[+]${RESET} Preparing to fix permissions for $(dirname $(readlink -f $1))"
+
+read -r -p "${YELLOW}${BOLD}[!]${RESET} Continue? [${BOLD}y${RESET}/${BOLD}N${RESET}] " response
+case $response in
+    [yY][eE][sS]|[yY]) 
+        ;;
+    *)
+        exit 96
+        ;;
+esac
+
+echo "${GREEN}${BOLD}[+]${RESET} Setting the sticky bit"
+sudo find ${LOCATION} -type d -name htdocs -print -exec chmod g+s {} \;
+
+echo "${GREEN}${BOLD}[+]${RESET} Chowning htdocs to root:webdev"
+sudo find ${LOCATION} -type d -name htdocs -print -exec chown root:webdev {} \;
+
+echo "${GREEN}${BOLD}[+]${RESET} Granting write permissions on htdocs for the webdev group"
+sudo find ${LOCATION} -type d -name htdocs -print -exec chmod g+w {} \;
+
+echo "${GREEN}${BOLD}[+]${RESET} Operation completed! Go get coding!"
+cowsay -f stimpy $(fortune -s)
