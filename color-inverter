@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# http://stackoverflow.com/questions/3552037/how-to-programmatically-invert-screen-colors-in-linux
+# Inverts X windows colors
+
+xcalib -invert -alter
