@@ -119,23 +119,23 @@ while (1) {
 	$scr->at(0,22)->puts(ON_BRIGHT_RED."\^".RESET); 
 	$scr->at(0,26)->puts(ON_BRIGHT_RED."\^".RESET); 
 	# Fills in the heart
-	$scr->at(1,22)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(1,26)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(2,21)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(2,22)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(2,23)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(2,25)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(2,26)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(2,27)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(3,22)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(3,23)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(3,24)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(3,25)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(3,26)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(4,23)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(4,24)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(4,25)->puts(ON_BRIGHT_MAGENTA."@".RESET);
-	$scr->at(5,24)->puts(ON_BRIGHT_MAGENTA."@".RESET);
+	$scr->at(1,22)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(1,26)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(2,21)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(2,22)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(2,23)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(2,25)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(2,26)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(2,27)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(3,22)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(3,23)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(3,24)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(3,25)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(3,26)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(4,23)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(4,24)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(4,25)->puts(ON_BRIGHT_MAGENTA.".".RESET);
+	$scr->at(5,24)->puts(ON_BRIGHT_MAGENTA.".".RESET);
 
 	# Homes the cursor to 0,0 per documentation
 	$scr->new;
