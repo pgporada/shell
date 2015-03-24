@@ -1,9 +1,15 @@
 #!/bin/bash
 #
+# USER NOTE:
+# This is for educational purposes only. I created this back in college 
+# to demonstrate that you should absolutely not use password authentication 
+# on linux boxes.
+#
+# CLASS NOTE:
 # Using the project1 auth.log search script, I took that output and ran these awk lines
 # awk '{ if ($8 !~ "invalid") print $8; else print $10; }' project1_output > duplicates
 # awk'!_[$1]++' duplicates > commonusers.txt
-#
+
 rd=$(tput setaf 1)
 gr=$(tput setaf 2)
 yl=$(tput setaf 3)
