@@ -1,6 +1,6 @@
 #!/bin/bash
 # AUTHOR:   Phil Porada - philporada@gmail.com
-# WHAT:     Automatically runs shred on any media plugged into the computer aside from devices in the exclusion list
+# WHAT:     Automatically runs nwipe on any media plugged into the computer aside from devices in the exclusion list
 # WHY:      because automagic
 
 
