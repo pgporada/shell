@@ -1,10 +1,7 @@
 #!/bin/bash
 # AUTHOR:   Phil Porada - philporada@gmail.com
 # WHAT:     Automatically runs shred on any media plugged into the computer aside from devices in the exclusion list
-# WHY:      because magic
-# http://www.yourownlinux.com/2013/10/working-with-arrays-in-bash-scripting.html
-# https://unix.stackexchange.com/questions/79375/for-loop-to-get-more-than-one-arguments
-# https://stackoverflow.com/questions/2312762/compare-difference-of-two-arrays-in-bash
+# WHY:      because automagic
 
 EXCLUSION=("sda" "sdb" "sr")
 BLD=$(tput bold)
@@ -14,10 +11,23 @@ GRN=$(tput setaf 2)
 BLU=$(tput setaf 4)
 KEYPRESS=""
 
+usage() {
+    echo "${BLD}${RED}WARNING: THIS SCRIPT WILL NUKE DATA IN ANY BLOCK DEVICE NOT IN THE EXCLUSION LIST${RST}"
+    echo "Current exclusion list"
+    for i in ${EXCLUSION[@]}; do
+        echo $i
+    done
+    echo
+    echo "Run the script as follows"
+    echo "${BLD}sudo ./$(basename $0)${RST}"
+}
+
 # Run only with root privs due to the forceful unmounting we need to do.
 # You can't sudo echo. You can... but whatever
 if [[ $EUID -ne 0 ]]; then
    echo "${BLD}${RED}This script must be run as root or with sudo${RST}" 1>&2
+   echo
+   usage
    exit 1
 fi
 
@@ -92,9 +102,9 @@ display_header() {
 
 
 clear
-#shredder_ascii
-#display_header
-#sleep 3
+shredder_ascii
+display_header
+sleep 3
 
 # This allows you to capture keyboard entries on stdin in a nonblocking fashion
 if [ -t 0 ]; then 
