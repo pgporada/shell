@@ -3,7 +3,7 @@
 # WHAT:     Automatically runs shred on any media plugged into the computer aside from devices in the exclusion list
 # WHY:      because automagic
 
-EXCLUSION=("sda" "sdb" "sr")
+EXCLUSION=("sda" "sdb" "sr" "xvda" "xvdb")
 BLD=$(tput bold)
 RST=$(tput sgr0)
 RED=$(tput setaf 1)
@@ -13,23 +13,43 @@ KEYPRESS=""
 
 usage() {
     echo "${BLD}${RED}WARNING: THIS SCRIPT WILL NUKE DATA IN ANY BLOCK DEVICE NOT IN THE EXCLUSION LIST${RST}"
-    echo "Current exclusion list"
+    echo "${BLD}Current exclusion list${RST}"
+    echo "${BLD}+--------------------+${RST}"
     for i in ${EXCLUSION[@]}; do
-        echo $i
+        echo "/dev/$i"
     done
     echo
-    echo "Run the script as follows"
-    echo "${BLD}sudo ./$(basename $0)${RST}"
+    echo "${BLD}Example usage${RST}"
+    echo "${BLD}+-----------+${RST}"
+    echo "This will run the script and start wiping your data with a DoD 3 pass"
+    echo "sudo ./$(basename $0) -f"
 }
 
 # Run only with root privs due to the forceful unmounting we need to do.
-# You can't sudo echo. You can... but whatever
-if [[ $EUID -ne 0 ]]; then
-   echo "${BLD}${RED}This script must be run as root or with sudo${RST}" 1>&2
-   echo
+# You can't sudo echo. You can technically... but whatever
+if [ $EUID -ne 0 ]; then
    usage
    exit 1
 fi
+
+if [ $# -ne 1 ]; then
+    usage
+    exit 1
+fi
+
+while getopts ":f" opt; do
+  case $opt in
+    f)
+      echo "${BLD}Running!${RST}" >&2
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2;
+      usage;
+      exit 1;
+      ;;
+  esac
+done
+
 
 if [ -f /etc/redhat-release ] ; then
     rpm -q nwipe &>/dev/null
@@ -123,7 +143,7 @@ while [ "x${KEYPRESS}" = "x" ]; do
     echo "${BLD}+ Current list of detected devices +${RST}"
     echo "${BLD}+----------------------------------+${RST}"
     for i in ${DETECTED[@]}; do
-        echo $i
+        echo "/dev/$i"
 
         if [ -b "/dev/$i" ]; then
             if [ -z $(ps aux | grep nwipe | grep $i | egrep -v '(grep|defunct)' | awk '{print $16}' | sed 's|/dev/||g' | head -n1) ]; then
