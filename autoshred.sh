@@ -3,7 +3,8 @@
 # WHAT:     Automatically runs shred on any media plugged into the computer aside from devices in the exclusion list
 # WHY:      because automagic
 
-EXCLUSION=("sda" "sdb" "sr" "xvda" "xvdb")
+
+EXCLUSION=("sda" "sdb" "sr")
 BLD=$(tput bold)
 RST=$(tput sgr0)
 RED=$(tput setaf 1)
@@ -13,6 +14,11 @@ KEYPRESS=""
 
 usage() {
     echo "${BLD}${RED}WARNING: THIS SCRIPT WILL NUKE DATA IN ANY BLOCK DEVICE NOT IN THE EXCLUSION LIST${RST}"
+    echo "${BLD}${RED}WARNING: THIS SCRIPT WILL NUKE DATA IN ANY BLOCK DEVICE NOT IN THE EXCLUSION LIST${RST}"
+    echo "${BLD}${RED}WARNING: THIS SCRIPT WILL NUKE DATA IN ANY BLOCK DEVICE NOT IN THE EXCLUSION LIST${RST}"
+    echo "${BLD}${RED}WARNING: THIS SCRIPT WILL NUKE DATA IN ANY BLOCK DEVICE NOT IN THE EXCLUSION LIST${RST}"
+    echo "${BLD}${RED}WARNING: THIS SCRIPT WILL NUKE DATA IN ANY BLOCK DEVICE NOT IN THE EXCLUSION LIST${RST}"
+    echo
     echo "${BLD}Current exclusion list${RST}"
     echo "${BLD}+--------------------+${RST}"
     for i in ${EXCLUSION[@]}; do
