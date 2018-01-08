@@ -2,7 +2,7 @@
 
 if [ ! -z ${1} ] && [ ${1} == "-h" ]; then
     echo -e "USAGE:
-                ./ $(basename $0) test
+                ./$(basename $0) test
             "
     exit 0
 fi
