@@ -1,10 +1,10 @@
 #!/bin/bash
 
 if [ ! -z ${1} ] && [ ${1} == "-h" ]; then
-	echo -e "USAGE:
-				./ $(basename $0) test
-			"
-	exit 0
+    echo -e "USAGE:
+                ./ $(basename $0) test
+            "
+    exit 0
 fi
 
 if [ "${EUID}" -eq 0 ]; then
