@@ -15,7 +15,7 @@ fi
 STATS_FILE="${HOME}/stats.txt"
 
 # Check dependencies
-for i in pip3 jq gnuplot; do
+for i in pip3 jq gnuplot display; do
     command -v ${i} > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "You need to install ${i} through your systems package manager. Exiting..."
@@ -55,25 +55,56 @@ if [ ! -z ${1} ] && [ ${1} == "test" ]; then
         rm -f ${TMP}
     fi
 
-    # Do some interesting stats while we have the raw data
-    echo "+-------+"
-    echo "There are $(wc -l ${STATS_FILE}) entries"
-    echo "There are $(awk '{print $2}' ${STATS_FILE} | uniq -u | wc -l) distinct entries"
+    LAST_EPISODE="$(tail -n1 ${STATS_FILE} | awk -F' ' '{print $2}' )"
 
-    LAST_EPISODE=$(tail -n1 ${STATS_FILE} | awk '{print $1}' )
-    for i in 1..${LAST_EPISODE}; do
-        echo $i
-    done
-    echo "We are missing episodes"
+    TOTAL_VIEWS="$(awk '{sum+=$1} END {print sum}' ${STATS_FILE})"
+    #sed 's/SMLR//g' ${STATS_FILE} | awk '$2=p+1 {sum+=$1} {print sum} {p=$2}' > file
+
+    HIGHEST="$(sort -k1 -rug ${STATS_FILE} | head -n1)"
+    HIGHEST_VIEWS="$(echo ${HIGHEST} | awk -F',' '{print $1}')"
+    HIGHEST_VIEWS_EPISODE="$(echo ${HIGHEST} | awk -F' ' '{print $2}')"
+
+    LOWEST="$(sort -k1 -ug ${STATS_FILE} | head -n1)"
+    LOWEST_VIEWS="$(echo ${LOWEST} | awk -F',' '{print $1}')"
+    LOWEST_VIEWS_EPISODE="$(echo ${LOWEST} | awk -F' ' '{print $2}')"
+
+    ENTRIES="$(wc -l ${STATS_FILE} | awk '{print $1}')"
+    DISTINCT_ENTRIES="$(awk '{print $2}' ${STATS_FILE} | sort -gu | wc -l)"
+
+    #MISSING_EPISODES="$(awk -F' ' '{print $2}' ${STATS_FILE} | sort -k2| uniq -u | awk -F' ' '$1!=p+1 {print p+1} {p=$1}' | tr '\n' ',' | sed 's/,$//')"
+
+    # Do some interesting stats while we have the raw data
+    echo "There are ${ENTRIES} entries"
+    echo "There are ${DISTINCT_ENTRIES} distinct entries"
+    #echo "We are missing episodes: ${MISSING_EPISODES}"
+    echo "The last episode recorded is: ${LAST_EPISODE}"
+    echo "We have had a total of ${TOTAL_VIEWS} views so far"
+    echo "The episode with the highest views was episode ${HIGHEST_VIEWS_EPISODE} with ${HIGHEST_VIEWS} views"
+    echo "The episode with the lowest views was episode ${LOWEST_VIEWS_EPISODE} with ${LOWEST_VIEWS} views"
+
+    cp ${STATS_FILE} stats.tmp
+    STMP="stats.tmp"
+    sed -i 's/SMLR //g' ${STMP}
 
     # Plot the data
+    echo "Plotting data with gnuplot..."
     echo -e "
         set term svg
         set output \"graph.svg\"
         set boxwidth 0.5
-        set style fill solid
-        plot \"${STATS_FILE}\" with boxes
+        set style fill solid border
+        set datafile separator ','
+        set grid
+        set title 'Sunday Morning Linux Review: Episodes vs Views'
+        set xrange [0:${LAST_EPISODE}+5]
+        set xlabel 'Episode'
+        set yrange [0:${HIGHEST_VIEWS}+500]
+        set ylabel 'Episode Views'
+        plot \"${STMP}\" using 2:1 with boxes
         exit" | gnuplot
+    rm -f ${STMP}
+
+    display graph.svg
 else
     ia-mine --secure -s SMLR | jq -r '.response.docs[] | "\(.downloads),\(.title)"' > ${STATS_FILE}
 fi
