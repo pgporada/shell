@@ -1,11 +1,30 @@
 #!/bin/bash
+#
+# Pulls and plots stats from archive.org about the SMLR Podcast
+#
+#Copyright (C) 2018 Phil Porada
+#
+#This program is free software; you can redistribute it and/or
+#modify it under the terms of the GNU General Public License
+#as published by the Free Software Foundation; either version 2
+#of the License, or (at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-if [ ! -z ${1} ] && [ ${1} == "-h" ]; then
-    echo -e "USAGE:
-                ./$(basename $0) test
-            "
-    exit 0
-fi
+function usage {
+        echo -e "USAGE:
+                    Collect data from archive.org | ./$(basename $0) -c
+                    Process collected data        | ./$(basename $0) -p
+                    Show this help screen         | ./$(basename $0) -h
+                "
+}
 
 if [ "${EUID}" -eq 0 ]; then
     echo "You don't need to be running this with privileges. Exiting..."
@@ -30,7 +49,11 @@ if [ $? -ne 0 ]; then
     pip3 install --upgrade --user iamine
 fi
 
-if [ ! -z ${1} ] && [ ${1} == "test" ]; then
+if [ -z ${1} ] || [ ${1} == "-h" ]; then
+    usage
+    exit 0
+# Process data
+elif [ ! -z ${1} ] && [ ${1} == "-p" ]; then
     # Format stats for ease of further consumption
     sed -i \
         -e 's/SMLR E /SMLR /g' \
@@ -105,6 +128,7 @@ if [ ! -z ${1} ] && [ ${1} == "test" ]; then
     rm -f ${STMP}
 
     display graph.svg
-else
+elif [ ! -z ${1} ] && [ ${1} == "-c" ]; then
+    # Collect data from archive.org
     ia-mine --secure -s SMLR | jq -r '.response.docs[] | "\(.downloads),\(.title)"' > ${STATS_FILE}
 fi
