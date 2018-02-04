@@ -20,9 +20,10 @@ DOM_TLD=$(echo ${DOM} | awk -F'\.' '{print $2}' 2>/dev/null)
 
 SAN_TLD_A=$(echo ${SAN} | awk '{print $1}' | awk -F'\.' '{print $3}' 2>/dev/null)
 SAN_TLD_B=$(echo ${SAN} | awk '{print $1}' | awk -F'\.' '{print $2}' 2>/dev/null)
+SAN_TLD_C=$(echo ${SAN} | awk '{print $1}' | awk -F'\.' '{print $1}' 2>/dev/null)
 
 function ok() {
-    echo "${BOLD}${DOM}${RESET} Ok"
+    echo "${BOLD}${DOM}${RESET} OK"
 }
 
 function error() {
@@ -35,7 +36,6 @@ function debug() {
     echo "DEBUG: DOM_A      ${DOM_A}"
     echo "DEBUG: DOM_B      ${DOM_B}"
     echo "DEBUG: DOM_TLD    ${DOM_TLD}"
-    echo "DEBUG: DOM_CMB    ${SAN_TLD_B}.${SAN_TLD_A}"
     echo "DEBUG:"
     echo "DEBUG: SAN        ${SAN}"
     echo "DEBUG: SAN_TLD_A  ${SAN_TLD_A}"
@@ -45,32 +45,27 @@ function debug() {
 
 COUNT=0
 
-if  ([[ ! "${DOM_A}" =~ "${SAN}" ]] || [[ ! "${DOM_B}" =~ "${SAN}" ]]); then
-    COUNT=$(( COUNT + 1 ))
-fi
-
-if [[ "${SAN_TLD_A}\.${SAN_TLD_B}" != "${DOM_B}" ]]; then
-    COUNT=$(( COUNT + 1 ))
-fi
-
-if [[ "${DOM_B}" != "${SAN_TLD_B}\." ]]; then
+if  (([[ ! "${DOM_A}" =~ "${SAN}" ]] || [[ ! "${DOM_B}" =~ "${SAN}" ]]) || [[ "${SAN_TLD_A}\.${SAN_TLD_B}" != "${DOM_B}" ]] || [[ "${DOM_B}" != "${SAN_TLD_B}\." ]]); then
     COUNT=$(( COUNT + 1 ))
 fi
 
 if [ "${COUNT}" -eq 2 ]; then
     ok
-    # debug
+    exit 0
+fi
+
+if [[ "${DOM}" == "${SAN}" ]]; then
+    ok
     exit 0
 fi
 
 if [[ "${SAN_TLD_B}.${SAN_TLD_A}" == "${DOM_B}" ]]; then
     error
-    # debug
-    exit 0
+    debug
+    exit 1
 fi
 
 if [[ "${DOM_B}" != "${SAN_TLD_B}." ]]; then
     ok
-    # debug
     exit 0
 fi
