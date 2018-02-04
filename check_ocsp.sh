@@ -11,8 +11,8 @@ if [ -z ${1} ]; then
     exit 1
 fi
 
-openssl s_client -connect ${1}:443 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p' > ${1}.pem
-OCSP_URL=$(openssl x509 -noout -ocsp_uri -in ${1}.pem)
+CERT=$(openssl s_client -connect ${DOMAIN}:443 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p')
+OCSP_URL=$(openssl x509 -noout -ocsp_uri -in <(echo "${CERT}"))
 
 if [ -z ${OCSP_URL} ]; then
     echo "${BOLD}Missing OCSP URL. Exiting...${RESET}"
@@ -20,27 +20,27 @@ if [ -z ${OCSP_URL} ]; then
 fi
 
 # Prepare the cert chain
-openssl s_client -connect ${1}:443 -showcerts 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p' > ${1}.tmpchain.pem
+TMPCHAIN=$(openssl s_client -connect ${DOMAIN}:443 -showcerts 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p')
 
 # Make sure we only get the chain certs because we already know our websites cert
-comm --nocheck-order -3 ${1}.pem ${1}.tmpchain.pem | sed 's/^[[:space:]]//g' > ${1}.chain.pem
+CHAIN=$(comm --nocheck-order -3 <(echo "${CERT}") <(echo "${TMPCHAIN}") | sed 's/^[[:space:]]//g')
 
 # Get the bare url
 OCSP_URL_STRIPPED_PROTOCOL=$(echo ${OCSP_URL} | sed 's|http://||')
 
 openssl ocsp \
-    -verify_other ${1}.chain.pem \
-    -respout ${1}.resp \
-    -reqout ${1}.req \
-    -issuer ${1}.chain.pem \
-    -cert ${1}.pem \
+    -verify_other <(echo "${CHAIN}") \
+    -respout ${DOMAIN}.resp \
+    -reqout ${DOMAIN}.req \
+    -issuer <(echo "${CHAIN}") \
+    -cert <(echo "${CERT}") \
     -text \
     -url ${OCSP_URL} \
     -header "HOST" "${OCSP_URL_STRIPPED_PROTOCOL}" \
     -no_nonce
 
 # Bae64 encode the request so we can use it for the GET test
-BASE64_REQUEST=$(openssl enc -a -in "${1}.req" | tr -d "\n")
+BASE64_REQUEST=$(openssl enc -a -in "${DOMAIN}.req" | tr -d "\n")
 
 echo -e "\n${BOLD}Testing GET${RESET}"
 curl --verbose --url "${OCSP_URL}/$BASE64_REQ" > /dev/null
@@ -51,7 +51,7 @@ else
 fi
 
 echo -e "\n${BOLD}Testing POST${RESET}"
-curl --verbose --data-binary @${1}.req -H "Content-Type:application/ocsp-request" --url ${OCSP_URL} > /dev/null
+curl --verbose --data-binary @${DOMAIN}.req -H "Content-Type:application/ocsp-request" --url ${OCSP_URL} > /dev/null
 if [ $? -ne 0 ]; then
     echo "${BOLD}POST failed${RESET}"
 else
@@ -59,4 +59,4 @@ else
 fi
 
 # Cleanup
-rm -f ${1}.tmpchain.pem ${1}.chain.pem ${1}.pem ${1}.resp ${1}.req ${1}.req.b64
+rm -f ${DOMAIN}.resp ${DOMAIN}.req ${DOMAIN}.req.b64
