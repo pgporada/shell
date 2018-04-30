@@ -1,6 +1,14 @@
 #!/bin/bash
 # AUTHOR: Phil Porada
 
+function ok() {
+    echo "${BOLD}${DOM}${RESET} OK"
+}
+
+function error() {
+    echo "${BOLD}${DOM}${RESET} ERROR - Invalid SAN cert"
+}
+
 DOM=${1}
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
@@ -11,7 +19,12 @@ if [ -z ${DOM} ]; then
     exit 1
 fi
 
-CERT=$(openssl s_client -connect ${DOM}:443 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p')
+CERT=$(timeout 1 openssl s_client -connect ${DOM}:443 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p')
+echo ${CERT} | grep "unable to load cert"
+if [ $? -ne 0 ]; then
+    echo "skipping"
+    exit 2
+fi
 SAN=$(openssl x509 -noout -text -in <(echo "${CERT}") | grep '^[[:space:]]*Subject: CN=' | sed 's/^[[:space:]]*Subject: CN=//')
 
 DOM_A=$(echo ${DOM} | awk -F'\.' '{print $1"\."$1}' 2>/dev/null)
@@ -21,14 +34,6 @@ DOM_TLD=$(echo ${DOM} | awk -F'\.' '{print $2}' 2>/dev/null)
 SAN_TLD_A=$(echo ${SAN} | awk '{print $1}' | awk -F'\.' '{print $3}' 2>/dev/null)
 SAN_TLD_B=$(echo ${SAN} | awk '{print $1}' | awk -F'\.' '{print $2}' 2>/dev/null)
 SAN_TLD_C=$(echo ${SAN} | awk '{print $1}' | awk -F'\.' '{print $1}' 2>/dev/null)
-
-function ok() {
-    echo "${BOLD}${DOM}${RESET} OK"
-}
-
-function error() {
-    echo "${BOLD}${DOM}${RESET} ERROR - Invalid SAN cert"
-}
 
 function debug() {
     echo "DEBUG:"
