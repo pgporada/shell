@@ -7,7 +7,7 @@ RESET=$(tput sgr0)
 
 if [ -z ${1} ]; then
     echo "Missing domain"
-    echo "Example: ${BOLD}./$(basename ${0} example.com)${RESET}"
+    echo "Example: ${BOLD}./$(basename ${0}) example.com${RESET}"
     exit 1
 fi
 
