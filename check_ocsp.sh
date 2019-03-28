@@ -11,8 +11,10 @@ if [ -z ${1} ]; then
     exit 1
 fi
 
-CERT=$(openssl s_client -connect ${DOMAIN}:443 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p')
+CERT=$(openssl s_client -connect ${DOMAIN}:443 -servername ${DOMAIN} 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p')
+echo ${CERT}
 OCSP_URL=$(openssl x509 -noout -ocsp_uri -in <(echo "${CERT}"))
+echo ${OCSP_URL}
 
 if [ -z ${OCSP_URL} ]; then
     echo "${BOLD}Missing OCSP URL. Exiting...${RESET}"
@@ -23,7 +25,10 @@ fi
 TMPCHAIN=$(openssl s_client -connect ${DOMAIN}:443 -showcerts 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p')
 
 # Make sure we only get the chain certs because we already know our websites cert
-CHAIN=$(comm --nocheck-order -3 <(echo "${CERT}") <(echo "${TMPCHAIN}") | sed 's/^[[:space:]]//g')
+CHAIN=$(comm --nocheck-order -3 <(echo -e "${CERT}") <(echo -e "${TMPCHAIN}") | sed 's/^[[:space:]]//g')
+
+openssl ocsp -issuer <(echo "${CHAIN}") -cert <(echo "${CERT}") -text -url ${OCSP_URL}
+echo "${OCSP_URL}"
 
 # Get the bare url
 OCSP_URL_STRIPPED_PROTOCOL=$(echo ${OCSP_URL} | sed 's|http://||')
