@@ -67,8 +67,8 @@ if [[ "${METHOD}" == "POST" ]]; then
     TEST_SERIAL2="$(curl -s -H 'Expect: 100-continue' -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
 elif [[ "${METHOD}" == "GET" ]]; then
     TEST_SERIAL1="$(curl -s --url "${OCSP_URL}/${BASE64_REQ}" | openssl ocsp -respin - -noverify -text | grep 'Serial Number:' | awk '{print $3}')"
-    curl --trace-ascii debug.txt -H 'Expect: 100-continue' --url "${OCSP_URL}/${BASE64_REQ}" > /dev/null
-    TEST_SERIAL2="$(curl -s -v -H 'Expect: 100-continue' --url "${OCSP_URL}/${BASE64_REQ}" | openssl ocsp -respin - -noverify -text | grep 'Serial Number:' | awk '{print $3}')"
+    curl --trace-ascii debug.txt -H 'Expect: 100-continue' --url "${OCSP_URL}/${BASE64_REQ}" > /dev/null 2>&1
+    TEST_SERIAL2="$(curl -s -H 'Expect: 100-continue' --url "${OCSP_URL}/${BASE64_REQ}" | openssl ocsp -respin - -noverify -text | grep 'Serial Number:' | awk '{print $3}')"
 else
     echo "No curl method selected"
 fi
