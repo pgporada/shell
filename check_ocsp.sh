@@ -3,7 +3,7 @@
 DOMAIN=${1}
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
-METHOD="GET"
+METHOD="POST"
 echo "Testing OCSP with curl ${METHOD}"
 
 if [ -z ${1} ]; then
@@ -64,6 +64,7 @@ function dont_need_this() {
 # Check for CDN caching improperly returning the wrong serial
 if [[ "${METHOD}" == "POST" ]]; then
     TEST_SERIAL1="$(curl -s -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
+    curl --trace-ascii debug.txt -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}' > /dev/null 2>&1
     TEST_SERIAL2="$(curl -s -H 'Expect: 100-continue' -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
 elif [[ "${METHOD}" == "GET" ]]; then
     TEST_SERIAL1="$(curl -s --url "${OCSP_URL}/${BASE64_REQ}" | openssl ocsp -respin - -noverify -text | grep 'Serial Number:' | awk '{print $3}')"
