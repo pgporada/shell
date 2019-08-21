@@ -1,5 +1,4 @@
 #!/bin/bash
-# AUTHOR: Phil Porada
 
 DOMAIN=${1}
 BOLD=$(tput bold)
@@ -12,9 +11,7 @@ if [ -z ${1} ]; then
 fi
 
 CERT=$(openssl s_client -connect ${DOMAIN}:443 -servername ${DOMAIN} 2>&1 < /dev/null | sed -n '/-----BEGIN/,/-----END/p')
-echo ${CERT}
 OCSP_URL=$(openssl x509 -noout -ocsp_uri -in <(echo "${CERT}"))
-echo ${OCSP_URL}
 
 if [ -z ${OCSP_URL} ]; then
     echo "${BOLD}Missing OCSP URL. Exiting...${RESET}"
@@ -27,40 +24,56 @@ TMPCHAIN=$(openssl s_client -connect ${DOMAIN}:443 -showcerts 2>&1 < /dev/null |
 # Make sure we only get the chain certs because we already know our websites cert
 CHAIN=$(comm --nocheck-order -3 <(echo -e "${CERT}") <(echo -e "${TMPCHAIN}") | sed 's/^[[:space:]]//g')
 
-openssl ocsp -issuer <(echo "${CHAIN}") -cert <(echo "${CERT}") -text -url ${OCSP_URL}
-echo "${OCSP_URL}"
-
 # Get the bare url
-OCSP_URL_STRIPPED_PROTOCOL=$(echo ${OCSP_URL} | sed 's|http://||')
+OCSP_URL_STRIPPED_PROTOCOL=$(echo ${OCSP_URL} | sed 's|https\?://||')
 
 openssl ocsp \
+    -issuer <(echo "${CHAIN}") \
+    -cert <(echo "${CERT}") \
     -verify_other <(echo "${CHAIN}") \
     -respout ${DOMAIN}.resp \
     -reqout ${DOMAIN}.req \
-    -issuer <(echo "${CHAIN}") \
-    -cert <(echo "${CERT}") \
     -text \
     -url ${OCSP_URL} \
-    -header "HOST" "${OCSP_URL_STRIPPED_PROTOCOL}" \
+    -header "HOST=${OCSP_URL_STRIPPED_PROTOCOL}" \
     -no_nonce
 
-# Bae64 encode the request so we can use it for the GET test
-BASE64_REQUEST=$(openssl enc -a -in "${DOMAIN}.req" | tr -d "\n")
+function dont_need_this() {
+    # Bae64 encode the request so we can use it for the GET test
+    BASE64_REQUEST=$(openssl enc -a -in "${DOMAIN}.req" | tr -d "\n")
 
-echo -e "\n${BOLD}Testing GET${RESET}"
-curl --verbose --url "${OCSP_URL}/$BASE64_REQ" > /dev/null
-if [ $? -ne 0 ]; then
-    echo "${BOLD}GET failed${RESET}"
-else
-    echo "${BOLD}GET was successful${RESET}"
-fi
+    echo -e "\n${BOLD}Testing GET${RESET}"
+    curl --verbose --url "${OCSP_URL}/$BASE64_REQ" > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "${BOLD}GET failed${RESET}"
+    else
+        echo "${BOLD}GET was successful${RESET}"
+    fi
 
-echo -e "\n${BOLD}Testing POST${RESET}"
-curl --verbose --data-binary @${DOMAIN}.req -H "Content-Type:application/ocsp-request" --url ${OCSP_URL} > /dev/null
-if [ $? -ne 0 ]; then
-    echo "${BOLD}POST failed${RESET}"
+    echo -e "\n${BOLD}Testing POST${RESET}"
+    curl --verbose --data-binary @${DOMAIN}.req -H "Content-Type:application/ocsp-request" --url ${OCSP_URL} > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "${BOLD}POST failed${RESET}"
+    else
+        echo "${BOLD}POST was successful${RESET}"
+    fi
+}
+
+# Check for CDN caching improperly returning the wrong serial
+TEST_SERIAL1="$(curl -s -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
+TEST_SERIAL2="$(curl -s -H 'Expect: 100-continue' -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
+if [[ "${TEST_SERIAL1}" == "${TEST_SERIAL2}" ]]; then
+    echo "Doesn't appear to be a CDN problem."
+    echo "https://crt.sh/?serial=${TEST_SERIAL1} and https://crt.sh/?serial=${TEST_SERIAL2}"
 else
-    echo "${BOLD}POST was successful${RESET}"
+    echo "Something is *VERY* wrong."
+    echo "https://crt.sh/?serial=${TEST_SERIAL1} and https://crt.sh/?serial=${TEST_SERIAL2}"
+    for i in ${TEST_SERIAL1} ${TEST_SERIAL2}; do
+        echo "Checking serial: ${i}"
+        for j in $(curl -sL https://crt.sh/?serial=${i} | grep 'href="?id=' | sed -e 's/<TD style="text-align:center">//' -e 's|</A></TD>||' | awk -F '>' '{print $2}'); do
+            openssl x509 -in <(curl -sL https://crt.sh/?d=${j}) -noout -subject
+        done
+    done
 fi
 
 # Cleanup
