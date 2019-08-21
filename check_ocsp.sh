@@ -4,6 +4,7 @@ DOMAIN=${1}
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 METHOD="GET"
+echo "Testing OCSP with curl ${METHOD}"
 
 if [ -z ${1} ]; then
     echo "Missing domain"
