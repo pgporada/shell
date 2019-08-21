@@ -3,6 +3,7 @@
 DOMAIN=${1}
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
+METHOD="GET"
 
 if [ -z ${1} ]; then
     echo "Missing domain"
@@ -38,10 +39,10 @@ openssl ocsp \
     -header "HOST=${OCSP_URL_STRIPPED_PROTOCOL}" \
     -no_nonce
 
-function dont_need_this() {
-    # Bae64 encode the request so we can use it for the GET test
-    BASE64_REQUEST=$(openssl enc -a -in "${DOMAIN}.req" | tr -d "\n")
+# Bae64 encode the request so we can use it for the GET test
+BASE64_REQ=$(openssl enc -a -in "${DOMAIN}.req" | tr -d "\n")
 
+function dont_need_this() {
     echo -e "\n${BOLD}Testing GET${RESET}"
     curl --verbose --url "${OCSP_URL}/$BASE64_REQ" > /dev/null
     if [ $? -ne 0 ]; then
@@ -60,8 +61,17 @@ function dont_need_this() {
 }
 
 # Check for CDN caching improperly returning the wrong serial
-TEST_SERIAL1="$(curl -s -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
-TEST_SERIAL2="$(curl -s -H 'Expect: 100-continue' -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
+if [[ "${METHOD}" == "POST" ]]; then
+    TEST_SERIAL1="$(curl -s -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
+    TEST_SERIAL2="$(curl -s -H 'Expect: 100-continue' -H 'Content-Type: application/ocsp-request' --data-binary @${DOMAIN}.req ${OCSP_URL} | openssl ocsp -respin - -noverify -text | grep 'Serial Number: ' | awk '{print $3}')"
+elif [[ "${METHOD}" == "GET" ]]; then
+    TEST_SERIAL1="$(curl -s --url "${OCSP_URL}/${BASE64_REQ}" | openssl ocsp -respin - -noverify -text | grep 'Serial Number:' | awk '{print $3}')"
+    curl --trace-ascii debug.txt -H 'Expect: 100-continue' --url "${OCSP_URL}/${BASE64_REQ}" > /dev/null
+    TEST_SERIAL2="$(curl -s -v -H 'Expect: 100-continue' --url "${OCSP_URL}/${BASE64_REQ}" | openssl ocsp -respin - -noverify -text | grep 'Serial Number:' | awk '{print $3}')"
+else
+    echo "No curl method selected"
+fi
+
 if [[ "${TEST_SERIAL1}" == "${TEST_SERIAL2}" ]]; then
     echo "Doesn't appear to be a CDN problem."
     echo "https://crt.sh/?serial=${TEST_SERIAL1} and https://crt.sh/?serial=${TEST_SERIAL2}"
@@ -75,6 +85,8 @@ else
         done
     done
 fi
+
+echo "Request with Expect header has been output to debug.txt"
 
 # Cleanup
 rm -f ${DOMAIN}.resp ${DOMAIN}.req ${DOMAIN}.req.b64
