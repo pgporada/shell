@@ -46,8 +46,16 @@ openssl ocsp \
     -header "HOST=${OCSP_URL_STRIPPED_PROTOCOL}" \
     -no_nonce
 
+curl -vv \
+    -H "Content-Type:application/ocsp-request" \
+    -H "Pragma: akamai-x-get-cache-key, akamai-x-cache-on, akamai-x-cache-remote-on, akamai-x-get-true-cache-key, akamai-x-get-extracted-values, akamai-x-check-cacheable, akamai-x-get-request-id, akamai-x-serial-no, akamai-x-get-ssl-client-session-id, akamai-x-feo-trace" \
+    --data-binary @${DOMAIN}.req \
+    --url ${OCSP_URL}
+
 # Bae64 encode the request so we can use it for the GET test
 BASE64_REQ=$(openssl enc -a -in "${DOMAIN}.req" | tr -d "\n")
+echo "${BASE64_REQ}" > ${DOMAIN}.req.b64
+
 
 function dont_need_this() {
     echo -e "\n${BOLD}Testing GET${RESET}"
@@ -95,4 +103,5 @@ function dont_need_this() {
 }
 
 echo "Request with Expect header has been output to debug.txt"
-rm -f ${DOMAIN}.resp ${DOMAIN}.req ${DOMAIN}.req.b64
+cat ${DOMAIN}.req.b64
+#rm -f ${DOMAIN}.resp ${DOMAIN}.req ${DOMAIN}.req.b64
